@@ -1,0 +1,19 @@
+project:
+  type: default
+
+title: "Parents-Présents"
+lang: fr-FR
+author:
+  - name: "Dr Philippe MICHEL"
+    affiliations:
+      name: "Hôpital NOVO"
+      department: "Unité de Soutien à la Recherche Clinique"
+format:
+  html:
+    toc: true
+    html-math-method: katex
+echo: false
+warning: false
+message: false
+cache: false
+license: "MIT"

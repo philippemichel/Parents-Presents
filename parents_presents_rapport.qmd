@@ -1,0 +1,474 @@
+---
+title: "Parents-Présents"
+subtitle: "Rapport Statistique -- V1.0"
+author:
+  - name: "Dr Philippe MICHEL"
+    affiliations:
+      name: "Hôpital NOVO"
+      department: "Unité de Soutien à la Recherche Clinique"
+lang: fr-FR
+date: today
+date-format: "DD/MM/YYYY"
+format:
+  html:
+    toc: true
+    html-math-method: katex
+echo: false
+warning: false
+message: false
+cache: false
+license: "MIT"
+---
+
+```{r}
+#| label: lib
+
+rm(list = ls())
+expx <- FALSE
+classeur <- "parents_presents.xlsx"
+#
+library(baseph)
+library(janitor)
+library(tidyverse)
+library(gtsummary)
+library(kableExtra)
+library(labelled)
+library(colorspace)
+library(ggstats)
+library(visdat)
+#
+theme_gtsummary_language(language = "fr", decimal.mark = ",")
+options(OutDec = ",")
+#
+# Niveaux ordonnés des items Likert
+lik_levels <- c(
+  "Pas du tout d'accord",
+  "Pas d'accord",
+  "Sans avis",
+  "D'accord",
+  "Tout à fait d'accord"
+)
+```
+
+```{r}
+#| label: import
+
+## Lecture des intitulés de variables
+bnom <- read_delim("datas/bnom.csv",
+  delim = ",",
+  show_col_types = FALSE
+)
+
+## Lecture des données Hospitalisation
+tt_hospit <- read_delim("datas/fake_hospit.csv",
+  delim = ";",
+  show_col_types = FALSE
+) |>
+  clean_names() |>
+  mutate(across(q1:q12, ~ factor(.x, levels = lik_levels, ordered = TRUE))) |>
+  mutate(
+    sex_par = as.factor(sex_par),
+    lien = as.factor(lien),
+    service = as.factor(service),
+    parcours = as.factor(parcours)
+  )
+
+## Lecture des données Consultation
+tt_consult <- read_delim("datas/fake_consult.csv",
+  delim = ";",
+  show_col_types = FALSE
+) |>
+  clean_names() |>
+  mutate(across(q1:q9, ~ factor(.x, levels = lik_levels, ordered = TRUE))) |>
+  mutate(across(q13:q15, ~ factor(.x, levels = lik_levels, ordered = TRUE))) |>
+  mutate(
+    sex_par = as.factor(sex_par),
+    lien = as.factor(lien),
+    service = as.factor(service),
+    parcours = as.factor(parcours)
+  )
+
+## Labels
+var_label(tt_hospit) <- as.list(setNames(bnom$nom, bnom$code)[names(tt_hospit)])
+var_label(tt_consult) <- as.list(setNames(bnom$nom, bnom$code)[names(tt_consult)])
+
+## Nombre de cas
+nhospit <- nrow(tt_hospit)
+nconsult <- nrow(tt_consult)
+```
+
+# Contrôle de l'échantillon
+
+Le questionnaire a été administré à **`r nhospit`** familles pour la version *Hospitalisation* et **`r nconsult`** familles pour la version *Consultation / Hôpital de jour*.
+
+## Données manquantes
+
+```{r}
+#| label: fig-manq-hospit
+#| fig-cap: "Données manquantes — version Hospitalisation"
+
+vis_dat(tt_hospit, palette = "qual")
+```
+
+```{r}
+#| label: fig-manq-consult
+#| fig-cap: "Données manquantes — version Consultation"
+
+vis_dat(tt_consult, palette = "qual")
+```
+
+# Description de la population
+
+## Version Hospitalisation
+
+```{r}
+#| label: tbl-demo-hospit
+#| tbl-cap: "Caractéristiques démographiques — Hospitalisation"
+
+tt_hospit |>
+  select(age_par, sex_par, lien, age_enf, service) |>
+  tbl_summary(missing = "no") |>
+  modify_header(label ~ " ") |>
+  add_n() |>
+  bold_labels() |>
+  pexptabph(
+    lg = FALSE,
+    exp = expx,
+    nomfich = classeur,
+    nomsheet = "demo_hospit"
+  )
+```
+
+## Version Consultation
+
+```{r}
+#| label: tbl-demo-consult
+#| tbl-cap: "Caractéristiques démographiques — Consultation"
+
+tt_consult |>
+  select(age_par, sex_par, lien, age_enf, service) |>
+  tbl_summary(missing = "no") |>
+  modify_header(label ~ " ") |>
+  add_n() |>
+  bold_labels() |>
+  pexptabph(
+    lg = FALSE,
+    exp = expx,
+    nomfich = classeur,
+    nomsheet = "demo_consult"
+  )
+```
+
+# Analyse des échelles de Likert
+
+## Items communs (Q1–Q9)
+
+### Tableaux de fréquences
+
+```{r}
+#| label: tbl-lik-hospit
+#| tbl-cap: "Distribution des réponses — Items communs — Hospitalisation"
+
+items_communs_labels <- c(
+  "Accueil satisfaisant",
+  "Informations claires sur l'état de santé",
+  "Temps consacré par le médecin suffisant",
+  "Expression des inquiétudes possible",
+  "Écoute du personnel soignant",
+  "Implication dans les décisions de soin",
+  "Confiance dans l'équipe soignante",
+  "Environnement adapté pour l'enfant",
+  "Compréhension du suivi à la sortie"
+)
+
+tt_hospit |>
+  select(q1:q9) |>
+  tbl_summary(
+    missing = "no",
+    label = setNames(as.list(items_communs_labels), paste0("q", 1:9))
+  ) |>
+  modify_header(label ~ "**Item**") |>
+  add_n() |>
+  bold_labels() |>
+  pexptabph(
+    lg = FALSE,
+    exp = expx,
+    nomfich = classeur,
+    nomsheet = "lik_hospit_commun"
+  )
+```
+
+```{r}
+#| label: tbl-lik-consult
+#| tbl-cap: "Distribution des réponses — Items communs — Consultation"
+
+tt_consult |>
+  select(q1:q9) |>
+  tbl_summary(
+    missing = "no",
+    label = setNames(as.list(items_communs_labels), paste0("q", 1:9))
+  ) |>
+  modify_header(label ~ "**Item**") |>
+  add_n() |>
+  bold_labels() |>
+  pexptabph(
+    lg = FALSE,
+    exp = expx,
+    nomfich = classeur,
+    nomsheet = "lik_consult_commun"
+  )
+```
+
+### Graphiques en barres empilées
+
+```{r}
+#| label: fig-lik-hospit
+#| fig-cap: "Distribution des réponses aux items communs — Hospitalisation"
+#| fig-height: 6
+
+tt_hospit |>
+  select(q1:q9) |>
+  rename(
+    `Q1 - Accueil` = q1,
+    `Q2 - Information` = q2,
+    `Q3 - Temps médecin` = q3,
+    `Q4 - Expression` = q4,
+    `Q5 - Écoute` = q5,
+    `Q6 - Décisions` = q6,
+    `Q7 - Confiance` = q7,
+    `Q8 - Environnement` = q8,
+    `Q9 - Suivi` = q9
+  ) |>
+  gglikert(symmetric = TRUE) +
+  labs(
+    title = "Ressentis des parents — Hospitalisation",
+    subtitle = paste0("n = ", nhospit),
+    caption = "Échelle de Likert à 5 niveaux"
+  ) +
+  theme_light()
+```
+
+```{r}
+#| label: fig-lik-consult
+#| fig-cap: "Distribution des réponses aux items communs — Consultation"
+#| fig-height: 6
+
+tt_consult |>
+  select(q1:q9) |>
+  rename(
+    `Q1 - Accueil` = q1,
+    `Q2 - Information` = q2,
+    `Q3 - Temps médecin` = q3,
+    `Q4 - Expression` = q4,
+    `Q5 - Écoute` = q5,
+    `Q6 - Décisions` = q6,
+    `Q7 - Confiance` = q7,
+    `Q8 - Environnement` = q8,
+    `Q9 - Suivi` = q9
+  ) |>
+  gglikert(symmetric = TRUE) +
+  labs(
+    title = "Ressentis des parents — Consultation / Hôpital de jour",
+    subtitle = paste0("n = ", nconsult),
+    caption = "Échelle de Likert à 5 niveaux"
+  ) +
+  theme_light()
+```
+
+## Items spécifiques — Hospitalisation (Q10–Q12)
+
+```{r}
+#| label: tbl-lik-hospit-spec
+#| tbl-cap: "Distribution des réponses — Items spécifiques Hospitalisation"
+
+items_hospit_labels <- c(
+  "Présence possible auprès de l'enfant",
+  "Confort de l'hébergement",
+  "Horaires de soins adaptés"
+)
+
+tt_hospit |>
+  select(q10:q12) |>
+  tbl_summary(
+    missing = "no",
+    label = setNames(as.list(items_hospit_labels), paste0("q", 10:12))
+  ) |>
+  modify_header(label ~ "**Item**") |>
+  add_n() |>
+  bold_labels() |>
+  pexptabph(
+    lg = FALSE,
+    exp = expx,
+    nomfich = classeur,
+    nomsheet = "lik_hospit_spec"
+  )
+```
+
+```{r}
+#| label: fig-lik-hospit-spec
+#| fig-cap: "Items spécifiques — Hospitalisation"
+#| fig-height: 4
+
+tt_hospit |>
+  select(q10:q12) |>
+  rename(
+    `Q10 - Présence` = q10,
+    `Q11 - Confort` = q11,
+    `Q12 - Horaires` = q12
+  ) |>
+  gglikert(symmetric = TRUE) +
+  labs(
+    title = "Items spécifiques — Hospitalisation",
+    subtitle = paste0("n = ", nhospit),
+    caption = "Échelle de Likert à 5 niveaux"
+  ) +
+  theme_light()
+```
+
+## Items spécifiques — Consultation (Q13–Q15)
+
+```{r}
+#| label: tbl-lik-consult-spec
+#| tbl-cap: "Distribution des réponses — Items spécifiques Consultation"
+
+items_consult_labels <- c(
+  "Délai d'attente acceptable",
+  "Instructions pour le retour claires",
+  "Suivi proposé adapté aux besoins"
+)
+
+tt_consult |>
+  select(q13:q15) |>
+  tbl_summary(
+    missing = "no",
+    label = setNames(as.list(items_consult_labels), paste0("q", 13:15))
+  ) |>
+  modify_header(label ~ "**Item**") |>
+  add_n() |>
+  bold_labels() |>
+  pexptabph(
+    lg = FALSE,
+    exp = expx,
+    nomfich = classeur,
+    nomsheet = "lik_consult_spec"
+  )
+```
+
+```{r}
+#| label: fig-lik-consult-spec
+#| fig-cap: "Items spécifiques — Consultation"
+#| fig-height: 4
+
+tt_consult |>
+  select(q13:q15) |>
+  rename(
+    `Q13 - Délai d'attente` = q13,
+    `Q14 - Instructions retour` = q14,
+    `Q15 - Suivi proposé` = q15
+  ) |>
+  gglikert(symmetric = TRUE) +
+  labs(
+    title = "Items spécifiques — Consultation / Hôpital de jour",
+    subtitle = paste0("n = ", nconsult),
+    caption = "Échelle de Likert à 5 niveaux"
+  ) +
+  theme_light()
+```
+
+# Score global de satisfaction
+
+Un score global (moyenne des items Q1–Q9 recodés en numérique, de 1 à 5) est calculé pour chaque questionnaire afin d'offrir une vue synthétique de la satisfaction des familles.
+
+```{r}
+#| label: score-global
+
+tt_hospit <- tt_hospit |>
+  mutate(
+    score_global = rowMeans(
+      across(q1:q9, ~ as.numeric(.x)),
+      na.rm = TRUE
+    )
+  )
+
+tt_consult <- tt_consult |>
+  mutate(
+    score_global = rowMeans(
+      across(q1:q9, ~ as.numeric(.x)),
+      na.rm = TRUE
+    )
+  )
+```
+
+```{r}
+#| label: tbl-score-global
+#| tbl-cap: "Score global de satisfaction (items communs Q1–Q9)"
+
+med_h <- round(median(tt_hospit$score_global, na.rm = TRUE), 2)
+q1_h <- round(quantile(tt_hospit$score_global, 0.25, na.rm = TRUE), 2)
+q3_h <- round(quantile(tt_hospit$score_global, 0.75, na.rm = TRUE), 2)
+
+med_c <- round(median(tt_consult$score_global, na.rm = TRUE), 2)
+q1_c <- round(quantile(tt_consult$score_global, 0.25, na.rm = TRUE), 2)
+q3_c <- round(quantile(tt_consult$score_global, 0.75, na.rm = TRUE), 2)
+
+tibble(
+  Parcours = c("Hospitalisation", "Consultation"),
+  n = c(nhospit, nconsult),
+  Médiane = c(med_h, med_c),
+  `Q1 – Q3` = c(
+    paste0(q1_h, " – ", q3_h),
+    paste0(q1_c, " – ", q3_c)
+  )
+) |>
+  kbl(
+    caption = "Score global de satisfaction (1 = très insatisfait, 5 = très satisfait)",
+    booktabs = TRUE,
+    align = c("l", "c", "c", "c")
+  ) |>
+  kable_styling(full_width = FALSE, position = "center")
+```
+
+```{r}
+#| label: fig-score-global
+#| fig-cap: "Score global de satisfaction selon le parcours"
+
+bind_rows(
+  tt_hospit |> select(score_global, parcours),
+  tt_consult |> select(score_global, parcours)
+) |>
+  ggplot(aes(x = parcours, y = score_global, fill = parcours)) +
+  geom_violin(alpha = 0.6) +
+  geom_boxplot(fill = "white", width = 0.2, outlier.shape = NA) +
+  scale_y_continuous(
+    "Score moyen (1–5)",
+    breaks = 1:5,
+    limits = c(1, 5)
+  ) +
+  scale_fill_discrete_qualitative(palette = "Dynamic") +
+  labs(
+    title = "Score global de satisfaction des familles",
+    subtitle = paste0(
+      "Hospitalisation : n = ", nhospit,
+      "   |   Consultation : n = ", nconsult
+    ),
+    x = "Parcours de soin",
+    caption = "Score moyen des items Q1–Q9 (Likert 1–5)"
+  ) +
+  theme_light() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title.x = element_blank(),
+    legend.position = "none"
+  )
+```
+
+# Technique {.appendix}
+
+L'analyse statistique a été réalisée avec le logiciel **R** et les packages `tidyverse`, `gtsummary`, `ggstats`, `baseph` et `kableExtra`.
+
+Les données présentées dans ce rapport sont des **données fictives de démonstration** générées aléatoirement ; elles ne représentent aucun patient réel.
+
+Le code source de cette analyse est disponible sur :
+
+<https://github.com/philippemichel/Parents-Presents>

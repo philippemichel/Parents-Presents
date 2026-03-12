@@ -1,0 +1,142 @@
+---
+title: "Parents-Présents"
+subtitle: "Plan d'analyse statistique"
+author:
+  - name: "Dr Philippe MICHEL"
+    affiliations:
+      name: "Hôpital NOVO"
+      department: "Unité de Soutien à la Recherche Clinique"
+lang: fr-FR
+date: today
+date-format: "DD/MM/YYYY"
+format:
+  html:
+    toc: true
+    html-math-method: katex
+echo: false
+warning: false
+message: false
+cache: false
+license: "MIT"
+---
+
+```{r setup}
+#| label: lib
+
+rm(list = ls())
+library(baseph)
+library(tidyverse)
+library(kableExtra)
+```
+
+## Généralités
+
+Le risque $\alpha$ retenu sera de 0,05 & la puissance de 0,8.
+
+Cette étude est purement descriptive. Aucun test de comparaison entre groupes n'est planifié dans l'objectif principal. Les variables numériques seront présentées par leur médiane avec les quartiles. Les variables catégorielles seront présentées en pourcentage avec leur intervalle de confiance à 95 %. Les items des échelles de Likert seront présentés par des tableaux de fréquences et des graphiques en barres empilées.
+
+## Taille de l'échantillon
+
+```{r}
+#| label: taille
+
+ex <- 0.05
+px <- 0.5
+np <- 5000
+nn <- nb.obs.ph(px = px, ex = ex, np = np)
+nn <- floor(nn * 1.1) + 1
+```
+
+Il s'agit d'une étude observationnelle descriptive sans hypothèse comparative. En prenant le taux le plus défavorable (`r px * 100` %) & une marge d'erreur de `r ex * 100` % on obtient un nombre minimal d'environ **`r nn` questionnaires par version** (calcul de taille pour un sondage, marge d'erreur sur proportion).
+
+## Population étudiée
+
+Les parents (ou représentants légaux) de tout enfant hospitalisé ou pris en charge dans le service de pédiatrie sont éligibles. Deux versions du questionnaire sont proposées selon le **parcours de soin** :
+
+- **Version Hospitalisation** : séjour en hospitalisation conventionnelle ou en soins intensifs pédiatriques.
+- **Version Consultation / Hôpital de jour** : consultation ambulatoire ou prise en charge en hôpital de jour pédiatrique.
+
+## Questionnaire
+
+Le questionnaire comprend deux parties :
+
+### Données démographiques
+
+- Âge et sexe du parent répondant
+- Lien avec l'enfant (mère, père, autre)
+- Âge de l'enfant
+- Service concerné
+
+### Échelles de Likert
+
+Les items sont évalués sur une échelle de Likert à 5 niveaux :
+
+| Score | Libellé |
+|------:|:--------|
+| 1 | Pas du tout d'accord |
+| 2 | Pas d'accord |
+| 3 | Sans avis |
+| 4 | D'accord |
+| 5 | Tout à fait d'accord |
+
+#### Items communs aux deux versions (Q1–Q9)
+
+| Item | Énoncé |
+|:-----|:-------|
+| Q1 | L'accueil lors de l'arrivée a été satisfaisant |
+| Q2 | Les informations sur l'état de santé de l'enfant étaient claires |
+| Q3 | Le médecin nous a consacré suffisamment de temps |
+| Q4 | Nous avons pu exprimer nos inquiétudes et préoccupations |
+| Q5 | Le personnel soignant a été à l'écoute de nos inquiétudes |
+| Q6 | Nous avons été impliqués dans les décisions de soin |
+| Q7 | Nous avons confiance dans l'équipe soignante |
+| Q8 | L'environnement était adapté pour l'enfant |
+| Q9 | Nous repartons avec une bonne compréhension du suivi |
+
+#### Items spécifiques à la version Hospitalisation (Q10–Q12)
+
+| Item | Énoncé |
+|:-----|:-------|
+| Q10 | Nous pouvions rester auprès de l'enfant quand nous le souhaitions |
+| Q11 | L'hébergement (chambre, installations) était confortable |
+| Q12 | Les horaires des soins étaient adaptés à notre organisation familiale |
+
+#### Items spécifiques à la version Consultation / Hôpital de jour (Q13–Q15)
+
+| Item | Énoncé |
+|:-----|:-------|
+| Q13 | Le délai d'attente avant d'être pris en charge était acceptable |
+| Q14 | Les instructions données pour le retour à domicile étaient claires |
+| Q15 | Le suivi proposé après la consultation nous a paru adapté |
+
+## Données manquantes
+
+Le décompte des données manquantes sera réalisé et présenté sous forme de graphique. Les items manquants seront exclus des calculs item par item ; aucune imputation n'est prévue pour cette analyse descriptive.
+
+## Plan d'analyse
+
+### Description de la population
+
+Un tableau descriptif présentera les caractéristiques démographiques des répondants pour chacune des deux versions.
+
+### Analyse des échelles de Likert
+
+Pour chaque item :
+
+- Tableau de fréquences (n et %) pour chaque niveau de l'échelle ;
+- Graphique en barres empilées (100 %) représentant la distribution des réponses ;
+- Médiane et quartiles du score numérique (1–5).
+
+Les neuf items communs seront également analysés en comparant les deux versions (hospitalisation vs. consultation) par un test de Wilcoxon ou un test du $\chi^2$ selon la présentation retenue — à titre exploratoire uniquement.
+
+### Analyse globale de satisfaction
+
+Un score global de satisfaction sera calculé comme la moyenne des 9 items communs (Q1–Q9), présenté par sa médiane et ses quartiles. La distribution sera illustrée par un graphique en violon ou en boîtes à moustaches pour chaque version.
+
+## Technique {.appendix}
+
+L'analyse statistique sera réalisée avec le logiciel **R** et divers packages, notamment `tidyverse`, `gtsummary` et `baseph`. Les graphiques de Likert seront produits avec le package `ggstats` ou `likertph`.
+
+Un dépôt GitHub sera utilisé ; il ne contiendra que le code et les données de démonstration (fictives), non les données réelles des patients.
+
+<https://github.com/philippemichel/Parents-Presents>

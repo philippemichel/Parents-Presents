@@ -1,0 +1,24 @@
+code,nom
+id,Identifiant
+date,Date du questionnaire
+parcours,Parcours de soin
+service,Service
+age_par,Âge du parent (ans)
+sex_par,Sexe du parent
+lien,Lien avec l'enfant
+age_enf,Âge de l'enfant (ans)
+q1,Accueil satisfaisant
+q2,Informations claires sur l'état de santé
+q3,Temps consacré par le médecin suffisant
+q4,Expression des inquiétudes possible
+q5,Écoute du personnel soignant
+q6,Implication dans les décisions de soin
+q7,Confiance dans l'équipe soignante
+q8,Environnement adapté pour l'enfant
+q9,Compréhension du suivi à la sortie
+q10,Présence possible auprès de l'enfant
+q11,Confort de l'hébergement
+q12,Horaires de soins adaptés
+q13,Délai d'attente acceptable
+q14,Instructions pour le retour à domicile claires
+q15,Suivi proposé adapté aux besoins
