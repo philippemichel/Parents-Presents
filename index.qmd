@@ -1,0 +1,66 @@
+---
+title: "Introduction"
+format: html
+---
+
+::: panel-tabset
+
+# Généralités
+
+Cette étude s'intéresse au **ressenti des parents présents** aux côtés de leur enfant hospitalisé en pédiatrie. Deux versions du questionnaire ont été élaborées selon le parcours de soins :
+
+- **Hospitalisation conventionnelle (HC)** : pour les enfants hospitalisés de façon programmée ou non programmée dans le service de pédiatrie générale.
+- **Urgences pédiatriques (URG)** : pour les parents consultant aux urgences pédiatriques.
+
+Les questionnaires utilisent des **échelles de Likert en 5 points** :
+
+| Score | Signification          |
+|-------|------------------------|
+| 1     | Pas du tout d'accord   |
+| 2     | Plutôt pas d'accord    |
+| 3     | Sans opinion           |
+| 4     | Plutôt d'accord        |
+| 5     | Tout à fait d'accord   |
+
+:::{.callout-note}
+L'analyse présentée ici est **purement descriptive** : distribution des réponses item par item, avec représentation graphique des échelles de Likert et tableau de synthèse.
+:::
+
+# Import
+
+```{r}
+#| label: import
+
+library("tidyverse")
+library("readODS")
+library("janitor")
+library("labelled")
+library("baseph")
+library("gtsummary")
+library("kableExtra")
+library("colorspace")
+
+nax <- c("", " ", "NA", "D")
+
+# Questionnaire HC
+hc <- read_ods("datas/questionnaire_hc.ods", na = nax) |>
+  clean_names() |>
+  mutate(across(where(is.character), as.factor))
+bn_hc <- read_ods("datas/questionnaire_hc.ods", sheet = "bnom", na = nax)
+var_label(hc) <- bn_hc$titres
+
+# Questionnaire URG
+urg <- read_ods("datas/questionnaire_urg.ods", na = nax) |>
+  clean_names() |>
+  mutate(across(where(is.character), as.factor))
+bn_urg <- read_ods("datas/questionnaire_urg.ods", sheet = "bnom", na = nax)
+var_label(urg) <- bn_urg$titres
+
+rm(bn_hc, bn_urg)
+
+theme_gtsummary_language(language = "fr", decimal.mark = ",")
+theme_gtsummary_journal(journal = "jama")
+options(OutDec = ",")
+```
+
+:::

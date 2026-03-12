@@ -1,0 +1,377 @@
+---
+title: "Analyse des questionnaires"
+format: html
+---
+
+```{r}
+#| label: setup
+
+library("tidyverse")
+library("readODS")
+library("janitor")
+library("labelled")
+library("baseph")
+library("gtsummary")
+library("kableExtra")
+library("colorspace")
+library("visdat")
+library("scales")
+
+nax <- c("", " ", "NA", "D")
+
+# Questionnaire HC
+hc <- read_ods("datas/questionnaire_hc.ods", na = nax) |>
+  clean_names() |>
+  mutate(across(where(is.character), as.factor))
+bn_hc <- read_ods("datas/questionnaire_hc.ods", sheet = "bnom", na = nax)
+var_label(hc) <- bn_hc$titres
+
+# Questionnaire URG
+urg <- read_ods("datas/questionnaire_urg.ods", na = nax) |>
+  clean_names() |>
+  mutate(across(where(is.character), as.factor))
+bn_urg <- read_ods("datas/questionnaire_urg.ods", sheet = "bnom", na = nax)
+var_label(urg) <- bn_urg$titres
+
+rm(bn_hc, bn_urg)
+
+theme_gtsummary_language(language = "fr", decimal.mark = ",")
+theme_gtsummary_journal(journal = "jama")
+options(OutDec = ",")
+
+# Étiquettes des niveaux de Likert
+lik5 <- c(
+  "Pas du tout d'accord",
+  "Plutôt pas d'accord",
+  "Sans opinion",
+  "Plutôt d'accord",
+  "Tout à fait d'accord"
+)
+
+# Libellés des items (clé = nom de colonne, valeur = libellé court)
+labels_communs <- c(
+  q1 = "Anxiété",
+  q2 = "Informé(e)",
+  q3 = "Confiance",
+  q4 = "Impliqué(e)",
+  q5 = "Compréhension",
+  q6 = "Soutenu(e)",
+  q7 = "Expression libre",
+  q8 = "Environnement"
+)
+
+labels_hc <- c(
+  labels_communs,
+  q9  = "Préparé(e) sortie",
+  q10 = "Durée adaptée"
+)
+
+labels_urg <- c(
+  labels_communs,
+  q9_urg  = "Rapidité PEC",
+  q10_urg = "Info lors attente"
+)
+
+# Items communs aux deux versions
+items_communs <- names(labels_communs)
+
+# Items spécifiques HC
+items_hc <- names(labels_hc)
+
+# Items spécifiques URG
+items_urg <- names(labels_urg)
+```
+
+::: panel-tabset
+
+# Hospitalisation conventionnelle (HC)
+
+## Données manquantes
+
+```{r}
+#| label: fig-manq-hc
+#| fig-cap: Données manquantes — Questionnaire HC
+
+hc |>
+  dplyr::select(all_of(items_hc)) |>
+  vis_miss(show_perc_col = TRUE)
+```
+
+## Tableau descriptif
+
+```{r}
+#| label: tbl-desc-hc
+#| tbl-cap: Distribution des réponses — Questionnaire HC
+
+hc |>
+  dplyr::select(all_of(items_hc)) |>
+  mutate(across(everything(), ~ factor(., levels = 1:5, labels = lik5))) |>
+  tbl_summary(
+    missing = "no",
+    type = all_categorical() ~ "categorical",
+    statistic = all_categorical() ~ "{n} ({p}%)"
+  ) |>
+  modify_header(label ~ "Item") |>
+  bold_labels() |>
+  as_kable_extra() |>
+  kable_material(c("striped", "hover")) |>
+  scroll_box(width = "100%", height = "650px")
+```
+
+## Distribution des réponses (Likert)
+
+```{r}
+#| label: fig-likert-hc
+#| fig-cap: Distribution des réponses de Likert — Questionnaire HC
+#| fig-asp: 0.8
+
+tit <- "Questionnaire HC — Ressenti des parents (hospitalisation conventionnelle)"
+
+hc |>
+  dplyr::select(all_of(items_hc)) |>
+  mutate(across(everything(), ~ factor(., levels = 1:5, labels = lik5))) |>
+  pivot_longer(everything()) |>
+  mutate(name = fct_relevel(name, items_hc)) |>
+  ggplot() +
+  aes(x = name, fill = value) +
+  geom_bar(stat = "count", position = "fill") +
+  scale_fill_discrete_diverging(palette = "Green-Orange") +
+  scale_y_continuous(labels = percent) +
+  scale_x_discrete(labels = labels_hc) +
+  labs(
+    title = tit,
+    y = "%",
+    x = "",
+    fill = "Réponse",
+    caption = tit
+  ) +
+  theme_light() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 12, angle = 90, vjust = .5),
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(size = 11, angle = 30, hjust = 1),
+    axis.text.y = element_text(size = 12),
+    legend.position = "right"
+  )
+```
+
+## Scores moyens
+
+```{r}
+#| label: tbl-scores-hc
+#| tbl-cap: Scores moyens par item — Questionnaire HC
+
+hc |>
+  dplyr::select(all_of(items_hc)) |>
+  mutate(across(everything(), as.numeric)) |>
+  pivot_longer(everything(), names_to = "item", values_to = "score") |>
+  group_by(item) |>
+  summarise(
+    n = sum(!is.na(score)),
+    moyenne = round(mean(score, na.rm = TRUE), 2),
+    ecart_type = round(sd(score, na.rm = TRUE), 2),
+    mediane = median(score, na.rm = TRUE)
+  ) |>
+  mutate(item = labels_hc[item]) |>
+  kbl(
+    col.names = c("Item", "n", "Moyenne", "Écart-type", "Médiane"),
+    booktabs = TRUE
+  ) |>
+  kable_material(c("striped", "hover"))
+```
+
+# Urgences pédiatriques (URG)
+
+## Données manquantes
+
+```{r}
+#| label: fig-manq-urg
+#| fig-cap: Données manquantes — Questionnaire URG
+
+urg |>
+  dplyr::select(all_of(items_urg)) |>
+  vis_miss(show_perc_col = TRUE)
+```
+
+## Tableau descriptif
+
+```{r}
+#| label: tbl-desc-urg
+#| tbl-cap: Distribution des réponses — Questionnaire URG
+
+urg |>
+  dplyr::select(all_of(items_urg)) |>
+  mutate(across(everything(), ~ factor(., levels = 1:5, labels = lik5))) |>
+  tbl_summary(
+    missing = "no",
+    type = all_categorical() ~ "categorical",
+    statistic = all_categorical() ~ "{n} ({p}%)"
+  ) |>
+  modify_header(label ~ "Item") |>
+  bold_labels() |>
+  as_kable_extra() |>
+  kable_material(c("striped", "hover")) |>
+  scroll_box(width = "100%", height = "650px")
+```
+
+## Distribution des réponses (Likert)
+
+```{r}
+#| label: fig-likert-urg
+#| fig-cap: Distribution des réponses de Likert — Questionnaire URG
+#| fig-asp: 0.8
+
+tit <- "Questionnaire URG — Ressenti des parents (urgences pédiatriques)"
+
+urg |>
+  dplyr::select(all_of(items_urg)) |>
+  mutate(across(everything(), ~ factor(., levels = 1:5, labels = lik5))) |>
+  pivot_longer(everything()) |>
+  mutate(name = fct_relevel(name, items_urg)) |>
+  ggplot() +
+  aes(x = name, fill = value) +
+  geom_bar(stat = "count", position = "fill") +
+  scale_fill_discrete_diverging(palette = "Green-Orange") +
+  scale_y_continuous(labels = percent) +
+  scale_x_discrete(labels = labels_urg) +
+  labs(
+    title = tit,
+    y = "%",
+    x = "",
+    fill = "Réponse",
+    caption = tit
+  ) +
+  theme_light() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 12, angle = 90, vjust = .5),
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(size = 11, angle = 30, hjust = 1),
+    axis.text.y = element_text(size = 12),
+    legend.position = "right"
+  )
+```
+
+## Scores moyens
+
+```{r}
+#| label: tbl-scores-urg
+#| tbl-cap: Scores moyens par item — Questionnaire URG
+
+urg |>
+  dplyr::select(all_of(items_urg)) |>
+  mutate(across(everything(), as.numeric)) |>
+  pivot_longer(everything(), names_to = "item", values_to = "score") |>
+  group_by(item) |>
+  summarise(
+    n = sum(!is.na(score)),
+    moyenne = round(mean(score, na.rm = TRUE), 2),
+    ecart_type = round(sd(score, na.rm = TRUE), 2),
+    mediane = median(score, na.rm = TRUE)
+  ) |>
+  mutate(item = labels_urg[item]) |>
+  kbl(
+    col.names = c("Item", "n", "Moyenne", "Écart-type", "Médiane"),
+    booktabs = TRUE
+  ) |>
+  kable_material(c("striped", "hover"))
+```
+
+# Comparaison HC vs URG
+
+```{r}
+#| label: tbl-comp
+#| tbl-cap: Comparaison des scores moyens sur les items communs (HC vs URG)
+
+scores_hc <- hc |>
+  dplyr::select(all_of(items_communs)) |>
+  mutate(across(everything(), as.numeric)) |>
+  pivot_longer(everything(), names_to = "item", values_to = "score") |>
+  group_by(item) |>
+  summarise(
+    n_hc = sum(!is.na(score)),
+    moy_hc = round(mean(score, na.rm = TRUE), 2),
+    sd_hc = round(sd(score, na.rm = TRUE), 2)
+  )
+
+scores_urg <- urg |>
+  dplyr::select(all_of(items_communs)) |>
+  mutate(across(everything(), as.numeric)) |>
+  pivot_longer(everything(), names_to = "item", values_to = "score") |>
+  group_by(item) |>
+  summarise(
+    n_urg = sum(!is.na(score)),
+    moy_urg = round(mean(score, na.rm = TRUE), 2),
+    sd_urg = round(sd(score, na.rm = TRUE), 2)
+  )
+
+left_join(scores_hc, scores_urg, by = "item") |>
+  mutate(item = labels_communs[item]) |>
+  kbl(
+    col.names = c(
+      "Item",
+      "n (HC)", "Moyenne (HC)", "ÉT (HC)",
+      "n (URG)", "Moyenne (URG)", "ÉT (URG)"
+    ),
+    booktabs = TRUE
+  ) |>
+  kable_material(c("striped", "hover"))
+```
+
+```{r}
+#| label: fig-comp
+#| fig-cap: Comparaison des scores moyens sur les items communs (HC vs URG)
+#| fig-asp: 0.7
+
+tit <- "Scores moyens par item commun selon le parcours"
+
+scores_hc_long <- hc |>
+  dplyr::select(all_of(items_communs)) |>
+  mutate(across(everything(), as.numeric)) |>
+  pivot_longer(everything(), names_to = "item", values_to = "score") |>
+  mutate(parcours = "HC")
+
+scores_urg_long <- urg |>
+  dplyr::select(all_of(items_communs)) |>
+  mutate(across(everything(), as.numeric)) |>
+  pivot_longer(everything(), names_to = "item", values_to = "score") |>
+  mutate(parcours = "URG")
+
+bind_rows(scores_hc_long, scores_urg_long) |>
+  group_by(item, parcours) |>
+  summarise(
+    moyenne = mean(score, na.rm = TRUE),
+    se = sd(score, na.rm = TRUE) / sqrt(sum(!is.na(score))),
+    .groups = "drop"
+  ) |>
+  mutate(item_label = labels_communs[item]) |>
+  ggplot() +
+  aes(x = item_label, y = moyenne, fill = parcours) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(
+    aes(ymin = moyenne - se, ymax = moyenne + se),
+    position = position_dodge(0.9),
+    width = 0.25
+  ) +
+  scale_fill_discrete_qualitative(palette = "Dynamic") +
+  scale_y_continuous(limits = c(0, 5)) +
+  labs(
+    title = tit,
+    y = "Score moyen (1–5)",
+    x = "",
+    fill = "Parcours",
+    caption = tit
+  ) +
+  theme_light() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 12, angle = 90, vjust = .5),
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(size = 11, angle = 30, hjust = 1),
+    axis.text.y = element_text(size = 12),
+    legend.position = "top"
+  )
+```
+
+:::
