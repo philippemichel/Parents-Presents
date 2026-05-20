@@ -1,4 +1,4 @@
-title: "PARENTS-PRÉSENTS"
+title: "PaReNCo"
 lang: fr
 author:
   - name: "Dr Philippe MICHEL"
@@ -36,7 +36,7 @@ lof: true
 lot: true
 fig-cap-location: bottom
 tbl-cap-location: top
-classoption: [french]
+# classoption: french
 papersize: a4
 editor: source
 bibliography: stat.bib

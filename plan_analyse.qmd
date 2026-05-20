@@ -1,5 +1,5 @@
 ---
-subtitle: "Plan d'analyse statistique V1.0"
+subtitle: "Plan d'analyse statistique V1.2"
 lof: false
 lot: false
 cache: false
@@ -42,7 +42,6 @@ Le risque $\alpha$ retenu sera de \num{0.05} & la puissance de \num{0.8}.
 
 Vu le faible nombre de cas on ne fera pas d'hypothèse de normalité. Les variables numériques seront présentées par leur médiane avec les quartiles. Les variables discrètes seront présentées en nombre avec le pourcentage avec son intervalle de confiance (à 95 %)  calculé par bootstrap (package `boot` [@boot]). Des graphiques seront réalisés pour les résultats importants (package `ggplot2` [@ggplot]).
 
-l
 L'étude comporte deux questionnaires : 
 
 - un pour les parents ayant participé à une réunion éthique
@@ -50,12 +49,16 @@ L'étude comporte deux questionnaires :
 
 
 Comme ces questionnaires ne comportent pas les mêmes items il n'y aura pas de comparaison chiffrée entre les deux. Ces questionnaires sont composés d'items se présentant selon trois formats : 
-œ
+
 - Réponses en Oui/Non
 - Échelles de Likert à cinq paliers
 - Questions ouvertes. 
 
 Les items en échelle de Likert seront présentées sous forme numérique avec des valeurs allant de 1 (réponse la plus mauvaise) à 5 (réponse la plus optimiste) & seront présentées par leur médiane avec les quartiles. Une représentation graphique sera réalisée (package `ggstats`[@ggstats]).
+
+Une présentation des réponses aux questions ouvertes sera réalisée si possible (nombreuses réponses, textes assez long) avec une présentation en nuage de mots (package `tidytext` [@tidytext]).
+
+\newpage
 
 ## Exemple
 
@@ -103,7 +106,7 @@ gglikert_side(tt,
         axis.text.x = element_blank())
 ```
 
-
+\newpage
 
 ## Taille de l'échantillon
 
@@ -111,7 +114,7 @@ Il s'agit d'une étude observationnelle simple pour lesquelles il est difficile 
 
 ## Données manquantes
 
-Le décompte des données manquantes sera réalisé & présenté par un tableau ou un graphique. Si nécessaire les données manquantes seront imputées (\glspl{imput} multiples, 150 itérations au maximum --- package `missMDA`[@missmda]) si considérées comme manquant de manière complètement aléatoire (`MCAR`) ou manquant de manière aléatoire (`MAR`).
+Le décompte des données manquantes sera réalisé & présenté par un tableau ou un graphique. Les variables présentant trop (plus de 20 %) de données manquantes sont exclues de l'analyse après accord du promoteur.
 
 ## Qualité des données
 
@@ -132,7 +135,7 @@ Un premier tableau présentera les données démographiques.
 # Objectif principal
 **Mesurer la compréhension par les parents de la décision prise pour leur enfant à la suite d’une réunion éthique.**
 
-Questions \textnumero{} 12, 13 & 14 pour les parents présents ; questions \textnumero{} 4, 5 & 12 pour les parents absent.
+Questions \textnumero{} 14, 15, 16 & 17  pour les parents présents ; questions \textnumero{} 6, 7, 10 & 14 pour les parents absent.
 
 # Objectifs secondaires
 
@@ -140,7 +143,7 @@ Questions \textnumero{} 12, 13 & 14 pour les parents présents ; questions \text
 
 *Ressenti émotionnel global concernant la réunion.*
 
-Questions \textnumero{} 4, 5, 6, 7, 9, 11, 16 & 18 pour les parents présents ; questions \textnumero{} 6, 7, 9, 10 et 11 pour les parents absents)
+Questions \textnumero{} 4, 5, 6, 7, 9, 12, 13 & 21 pour les parents présents ; questions \textnumero{} 4, 5, 9, 13, 15 & 17 pour les parents absents)
 
 ## Objectif 2
 
@@ -158,12 +161,12 @@ Le taux sera présenté en nombre & pourcentage avec son intervalle de confiance
 
 *Sentiment de culpabilité ressenti par les parents au moment de la réunion éthique.*
 
-Questions \textnumero{} 23 & 24 pour les parents présents ; question \textnumero{} 8 & 13 pour les parents absents.
+Questions \textnumero{} 10 & 20 pour les parents présents ; question \textnumero{} 8 & 12 pour les parents absents.
 
 ## Objectif 5
 *Acceptation par les parents de la décision prise par l’équipe médicale lors de la réunion éthique organisée pour leur enfant *
 
-Questions \textnumero{} 8, 10, 15, 17, 19, 20, 21, 25 & 28 pour les parents présents ; questions \textnumero{}  14 pour les parents absents
+Questions \textnumero{} 8, 11, 18, 19, 22, 23, 24 & 25 pour les parents présents ; questions \textnumero{}  11 & 16 pour les parents absents
 
 # Technique {.unnumbered}
 
